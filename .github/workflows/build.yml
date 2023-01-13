@@ -23,7 +23,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: raspberry-daemon-x86_64
-          path: target/release/raspberry-daemon
+          path: target/x86_64-unknown-linux-gnu/release/raspberry-daemon
       - uses: actions/upload-artifact@v3
         with:
           name: raspberry-daemon-armv7
