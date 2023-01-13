@@ -1,0 +1,31 @@
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        name: Build X86_64
+        with:
+          command: build
+          args: --target=x86_64-unknown-linux-gnu --release
+      - uses: actions-rs/cargo@v1
+        name: Build Armv7
+        with:
+          command: build
+          args: --target armv7-unknown-linux-gnueabihf --release
+          use-cross: true
+      - uses: actions/upload-artifact@v3
+        with:
+          name: raspberry-daemon-x86_64
+          path: target/release/raspberry-daemon
+      - uses: actions/upload-artifact@v3
+        with:
+          name: raspberry-daemon-armv7
+          path: target/armv7-unknown-linux-gnueabihf/release/raspberry-daemon
+      
