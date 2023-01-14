@@ -13,5 +13,5 @@ pub enum ConfigManagerError {
     #[error("Config file was missing fields! {0}")]
     ConfigFileMissingFields(toml_edit::de::Error),
     #[error("Reporting interval cannot be negative")]
-    ReportingIntervalNegative
+    ReportingIntervalNegative,
 }

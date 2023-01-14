@@ -6,8 +6,8 @@ use tokio::process::Command;
 use tokio::sync::Mutex;
 use tokio::time::{sleep_until, Duration, Instant};
 
-pub static LAST_STATUS: Lazy<Mutex<(Option<DataError>, DateTime<Utc>)>> =
-    Lazy::new(|| Mutex::new((None, DateTime::default())));
+pub static LAST_STATUS: Lazy<Mutex<(Option<DataError>, DateTime<Utc>, (f64, f64))>> =
+    Lazy::new(|| Mutex::new((None, DateTime::parse_from_rfc3339("1337-01-01T00:00:00Z").unwrap().with_timezone(&Utc), (0.0, 0.0))));
 
 #[derive(Error, Debug, Clone, Serialize)]
 pub enum DataError {
@@ -31,7 +31,7 @@ pub async fn data() {
                             v = 0.0;
                         }
                         v
-                    },
+                    }
                     Err(error) => {
                         tracing::error!(%error, "Couldn't lock interval.");
                         continue;
@@ -39,7 +39,7 @@ pub async fn data() {
                 },
             ))
             .unwrap();
-        
+
         // Ignore errors since it's logged and we want to continue.
         if data_collection().await.is_err() {};
 
@@ -50,22 +50,29 @@ pub async fn data() {
 pub async fn data_collection() -> Result<(), DataError> {
     let data = crate::retry::retry(
         "data",
-        crate::retry::ExponentialBackoff::new(1.0 / 1000.0 * 100.0, 2.0, 3),
+        crate::retry::ExponentialBackoff::new((1.0 / 1000.0) * 100.0, 2.0, 3),
         collect,
     )
     .await;
     match data {
         Ok(x) => {
-            *LAST_STATUS.lock().await = (None, Utc::now());
-            tracing::info!(data = ?x, "Succesfully got data!");
+            *LAST_STATUS.lock().await = (None, Utc::now(), x);
+            tracing::info!(data = ?x, "Successfully got data!");
+            send_data(x).await;
             Ok(())
         }
         Err(x) => {
-            tracing::error!("Couldn't get data: {x:#?}");
-            *LAST_STATUS.lock().await = (Some(x.clone()), Utc::now());
+            tracing::error!(error = %x, "Couldn't get data!");
+            let mut last_status = LAST_STATUS.lock().await;
+            *last_status = (Some(x.clone()), last_status.1, last_status.2);
             Err(x)
         }
     }
+}
+
+async fn send_data(data: (f64, f64)) -> Result<(), DataError> {
+    todo!();
+    Ok(())
 }
 
 async fn collect() -> Result<(f64, f64), DataError> {

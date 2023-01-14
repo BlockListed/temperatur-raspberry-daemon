@@ -16,7 +16,7 @@ pub async fn ping() {
         let next_time = Instant::now().checked_add(Duration::from_secs(5)).unwrap();
         let ping_error = crate::retry::retry(
             "ping",
-            crate::retry::ExponentialBackoff::new(1.0 / 1000.0 * 25.0, 2.0, 3),
+            crate::retry::ExponentialBackoff::new((1.0 / 1000.0) * 25.0, 2.0, 3),
             || async {
                 return c
                     .post(crate::CONFIG.configuration().node_endpoint.clone() + "/ip_update")
@@ -26,7 +26,7 @@ pub async fn ping() {
         )
         .await;
         if let Err(x) = ping_error {
-            tracing::error!("Failed to ping. Last Error: {x}");
+            tracing::error!(error = %x, "Failed to ping!");
         }
 
         sleep_until(next_time).await;
