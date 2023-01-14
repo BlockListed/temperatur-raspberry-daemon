@@ -5,12 +5,12 @@ use tokio::time::{sleep, Duration};
 pub struct ExponentialBackoff {
     sleep_time_secs: f64,
     factor: f64,
-    retries: u32,
-    max_retries: u32,
+    retries: usize,
+    max_retries: usize,
 }
 
 impl ExponentialBackoff {
-    pub fn new(base_sleep_time_secs: f64, factor: f64, max_retries: u32) -> Self {
+    pub fn new(base_sleep_time_secs: f64, factor: f64, max_retries: usize) -> Self {
         Self {
             sleep_time_secs: base_sleep_time_secs,
             factor,
@@ -19,7 +19,7 @@ impl ExponentialBackoff {
         }
     }
 
-    pub fn len(&self) -> u32 {
+    pub fn len(&self) -> usize {
         self.max_retries
     }
 }
@@ -56,7 +56,7 @@ where
             Ok(x) => return Ok(x),
             Err(error) => {
                 tracing::warn!(retry_name, %error, "Retrying!");
-                if i as u32 == retries {
+                if i == retries {
                     return Err(error);
                 }
             }
