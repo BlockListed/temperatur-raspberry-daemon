@@ -2,8 +2,10 @@ use once_cell::sync::Lazy;
 use tracing_subscriber::util::SubscriberInitExt;
 
 mod config;
+mod retry;
 
 mod data;
+mod ping;
 mod web;
 
 static CONFIG: Lazy<config::ConfigManager> = Lazy::new(|| {
@@ -27,6 +29,7 @@ async fn main() {
     let mut handles = Vec::new();
     handles.push(tokio::spawn(web::web()));
     handles.push(tokio::spawn(data::data()));
+    handles.push(tokio::spawn(ping::ping()));
 
     for h in handles {
         h.await.unwrap();

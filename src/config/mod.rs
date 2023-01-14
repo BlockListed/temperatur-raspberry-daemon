@@ -1,17 +1,17 @@
 use std::fs::read;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use std::{env::var, str::FromStr};
 
 use serde::Deserialize;
 use toml_edit::{de, value, Document};
 
-mod error;
+pub mod error;
 use error::ConfigManagerError;
 
 #[derive(Deserialize)]
 pub struct Configuration {
     pub endpoint: String,
+    pub data_script: String,
     pub node_endpoint: String,
     pub graphana_endpoint: String,
     pub reporting_interval: Mutex<f64>,
@@ -66,18 +66,23 @@ impl ConfigManager {
     }
 
     pub fn update_reporting_interval(&self, seconds: f64) -> Result<(), ConfigManagerError> {
+        if seconds < 0.0 {
+            return Err(ConfigManagerError::ReportingIntervalNegative)
+        }
         let mut doc = match self.doc.lock() {
             Ok(x) => x,
             Err(_) => return Err(ConfigManagerError::MutexPoisoned),
         };
+        doc["reporting_interval"] = value(seconds);
+        drop(doc);
 
         let mut interval = match self.conf.reporting_interval.lock() {
             Ok(x) => x,
             Err(_) => return Err(ConfigManagerError::MutexPoisoned),
         };
-
-        doc["reporting_interval"] = value(seconds);
         *interval = seconds;
+        drop(interval);
+
         self.save()?;
         Ok(())
     }
