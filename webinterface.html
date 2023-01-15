@@ -82,7 +82,7 @@
         </div>
         <h3 v-if="!statusGood" style="color: var(--bs-danger)">Reason: {{ reason }}</h3>
         <div class="row">
-            <label for="interval">Data Collection Interval in Seconds</label>
+            <label class="fw-bolder fs-3" for="interval">Data Collection Interval in Seconds</label>
             <input type="number" name="interval" v-model="interval" value="120" />
             <button class="btn btn-primary" @click="sendInterval">Set</button>
             <p class="fw-bold fs-2" style="color: var(--bs-danger)" v-if="intervalReturn">{{ intervalReturn }}</p>
