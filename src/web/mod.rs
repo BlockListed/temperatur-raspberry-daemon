@@ -41,8 +41,8 @@ async fn status() -> Json<StatusResponse> {
     };
     Json(StatusResponse {
         status,
-        time: Utc::now(),
-        last_send,
+        time: Utc::now().round_subsecs(3),
+        last_send: last_send.round_subsecs(3),
         last_sent_data,
         reporting_interval,
         graphana_endpoint,

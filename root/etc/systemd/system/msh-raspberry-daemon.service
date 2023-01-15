@@ -1,0 +1,6 @@
+[Unit]
+Description=Daemon für Messgerät Projekt (Aaron <llpvbel7h@mozmail.com>)
+
+[Service]
+Type=simple
+ExecStart=/usr/local/msh/bin/raspberry-daemon

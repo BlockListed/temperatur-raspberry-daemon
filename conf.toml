@@ -1,5 +1,5 @@
 endpoint = "0.0.0.0:3000"
-node_endpoint = "http://127.0.0.1:4200"
+node_endpoint = "http://127.0.0.1:1420"
 graphana_endpoint = "http://127.0.0.1:3000"
 data_script = "./mock.py"
 # Seconds between reporting

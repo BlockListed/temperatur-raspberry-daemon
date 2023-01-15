@@ -12,7 +12,7 @@ mod web;
 
 static CONFIG: Lazy<config::ConfigManager> = Lazy::new(|| {
     config::ConfigManager::new(
-        std::env::var("CONFIG_FILE").unwrap_or_else(|_| "/etc/conf.d/msh_daemon.toml".to_string()),
+        std::env::var("CONFIG_FILE").unwrap_or_else(|_| "/etc/conf.d/msh_raspberry_daemon.toml".to_string()),
     )
     .unwrap()
 });
