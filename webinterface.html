@@ -23,6 +23,10 @@
             interval: 0.0,
             intervalReturn: null,
             mounted() {
+                this.update();
+                setInterval(this.update, 500);
+            },
+            update() {
                 let that = this;
                 fetch("/status").then((x) => {
                     x.json().then((y) => {
@@ -51,7 +55,7 @@
                         if (y.error) {
                             that.intervalReturn = y.error;
                         } else {
-                            that.mounted();
+                            that.update();
                         }
                     })
                 })
@@ -59,7 +63,7 @@
             sendData() {
                 let that = this;
                 fetch(`/force_send_data`, {method: "POST"}).then((_) => {
-                    that.mounted();
+                    that.update();
                 })
             }
         }).mount("#app")
