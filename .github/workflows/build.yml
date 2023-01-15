@@ -10,7 +10,7 @@ jobs:
         with:
           toolchain: stable
 
-      - name: cache restore
+      - name: cache
         uses: actions/cache@v3
         with:
           path: target/
