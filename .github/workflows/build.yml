@@ -10,12 +10,16 @@ jobs:
         with:
           toolchain: stable
 
-      - name: cache
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
-          path: target/
-          key: ${{ runner.os }}-build
-
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo
+      
       - uses: actions-rs/cargo@v1
         name: Build X86_64
         with:
