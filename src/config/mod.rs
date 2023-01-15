@@ -15,6 +15,7 @@ pub struct Configuration {
     pub node_endpoint: String,
     pub graphana_endpoint: String,
     pub reporting_interval: Mutex<f64>,
+    pub raum_id: i32,
 }
 
 pub struct ConfigManager {

@@ -1,3 +1,5 @@
+#![allow(clippy::needless_return)]
+
 use once_cell::sync::Lazy;
 use tracing_subscriber::util::SubscriberInitExt;
 

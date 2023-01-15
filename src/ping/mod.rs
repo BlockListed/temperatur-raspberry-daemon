@@ -4,13 +4,7 @@ use reqwest::Client;
 
 #[tracing::instrument]
 pub async fn ping() {
-    let c = match Client::builder().build() {
-        Ok(x) => x,
-        Err(x) => {
-            tracing::error!("Failed to build client. {:?}", x);
-            panic!("{}", x);
-        }
-    };
+    let c = Client::new();
     loop {
         // Code to send and retry.
         let next_time = Instant::now().checked_add(Duration::from_secs(5)).unwrap();

@@ -8,6 +8,8 @@ use axum::{
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::data::Data;
+
 async fn root() -> Html<&'static str> {
     Html(include_str!("../../webinterface.html"))
 }
@@ -23,7 +25,7 @@ pub struct StatusResponse {
     pub status: Status,
     pub time: chrono::DateTime<Utc>,
     pub last_send: chrono::DateTime<Utc>,
-    pub last_sent_data: (f64, f64),
+    pub last_sent_data: Data,
     pub reporting_interval: f64,
     pub graphana_endpoint: String,
 }
@@ -64,13 +66,13 @@ async fn update_reporting_interval(
     match crate::CONFIG.update_reporting_interval(i.interval) {
         Ok(_) => {
             tracing::info!(i.interval, "Succesfully updated reporting interval!");
-            return Json(UpdateReportingIntervalResponse { error: None });
+            return Json(UpdateReportingIntervalResponse { error: None })
         }
         Err(error) => {
             tracing::error!(%error, "Couldn't update reporting inteval!");
             return Json(UpdateReportingIntervalResponse {
                 error: Some(error.to_string()),
-            });
+            })
         }
     }
 }

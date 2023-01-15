@@ -65,8 +65,8 @@
     <div class="container text-center" id="app" @vue:mounted="mounted">
         <a :href="graphanaEndpoint" target="_blank"><h1>Graphana</h1></a>
         <h1>Status:</h1>
-        <h3>Time on Raspberry: {{ timeOnServer }}</h3>
-        <h3>Last Sent Data: {{ data }} / {{ lastSend }} / {{ reportingInterval }}</h3>
+	<h3>Time on Raspberry: <span style="color: var(--bs-primary)">{{ timeOnServer }}</span></h3>
+        <h3>Last Sent Data: <span style="color: var(--bs-primary)">{{ data }} / {{ lastSend }} / {{ reportingInterval }}</span></h3>
         <button class="btn btn-primary" @click="sendData">Force Send Data</button>
         <div v-if="statusGood">
             <i class="bi bi-emoji-smile" style="color: var(--bs-success); font-size: 25rem"></i>
@@ -74,7 +74,7 @@
         <div v-if="!statusGood">
             <i class="bi bi-emoji-frown" style="color: var(--bs-danger); font-size: 25rem"></i>
         </div>
-        <h3 v-if="!statusGood">Reason: {{ reason }}</h3>
+        <h3 v-if="!statusGood" style="color: var(--bs-danger)">Reason: {{ reason }}</h3>
         <div class="row">
             <label for="interval">Data Collection Interval in Seconds</label>
             <input type="number" name="interval" v-model="interval" value="120" />
