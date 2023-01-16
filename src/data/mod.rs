@@ -1,3 +1,7 @@
+use std::fmt::Display;
+use std::ops::Deref;
+use std::str::FromStr;
+
 use chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use serde::Serialize;
@@ -10,7 +14,7 @@ use crate::retry;
 
 #[derive(Default, Debug, Clone, Copy, Serialize)]
 pub struct Data {
-    co2: f64,
+    co2: u16,
     temperature: f64,
 }
 
@@ -59,12 +63,7 @@ pub async fn data() {
 }
 
 pub async fn data_collection() -> Result<(), DataError> {
-    let data = crate::retry::retry(
-        "data",
-        crate::retry::ExponentialBackoff::new((1.0 / 1000.0) * 100.0, 2.0, 3),
-        collect,
-    )
-    .await;
+    let data = collect().await;
     match data {
         Ok(x) => {
             *LAST_STATUS.lock().await = (None, Utc::now(), x);
@@ -92,7 +91,7 @@ enum SendError {
 async fn send_data(data: Data) -> Result<(), DataError> {
     let client = reqwest::Client::new();
     match retry::retry("send_data", retry::ExponentialBackoff::new((1.0 / 1000.0) * 200.0, 2.0, 4), || async {
-        let r = client.post(crate::CONFIG.configuration().node_endpoint.clone() + "/insert")
+        let r = client.post(crate::CONFIG.configuration().node_endpoint.to_string() + "/insert")
             .query(&[("kohlenstoff", data.co2.to_string()), ("temperatur", data.temperature.to_string()), ("raum_id", crate::CONFIG.configuration().raum_id.to_string())])
             .send()
             .await;
@@ -119,8 +118,28 @@ async fn send_data(data: Data) -> Result<(), DataError> {
 }
 
 async fn collect() -> Result<Data, DataError> {
-    let cmd = match Command::new("/usr/bin/python3")
-        .arg(&crate::CONFIG.configuration().data_script)
+    Ok(Data {
+        co2: parse_string(
+            crate::retry::retry(
+                "get_co2",
+                crate::retry::ExponentialBackoff::new((1.0 / 1000.0) * 100.0, 2.0, 3),
+                || async {run_command(crate::CONFIG.configuration().ppa_command.deref()).await},
+            ).await?
+        )?,
+        temperature: parse_string(
+            crate::retry::retry(
+                "get_temp",
+                crate::retry::ExponentialBackoff::new((1.0 / 1000.0) * 100.0, 2.0, 3),
+                || async {run_command(crate::CONFIG.configuration().temp_command.deref()).await},
+            ).await?
+        )?,
+    })
+}
+
+async fn run_command(cmd: &str) -> Result<String, DataError> {
+    let cmd = match Command::new("/bin/sh")
+        .arg("-c")
+        .arg(cmd.deref())
         .output()
         .await
     {
@@ -136,35 +155,27 @@ async fn collect() -> Result<Data, DataError> {
         ));
     }
 
-    let out = String::from_utf8(cmd.stdout).unwrap();
-
-    parse_script_output(out)
+    match String::from_utf8(cmd.stdout) {
+        Ok(x) => Ok(x),
+        Err(e) => {
+            tracing::error!(%e, "Script returned non UTF-8 output!");
+            Err(DataError::ScriptInvalidOutput)
+        }
+    }
 }
 
-fn parse_script_output(mut output: String) -> Result<Data, DataError> {
-    let len = output.trim_end_matches(&['\r', '\n'][..]).len();
-    output.truncate(len);
-    let segments = output.split(',').take(2).collect::<Vec<&str>>();
-    let co2 = parse_as_f64(segments[0])?;
-    let temperature = parse_as_f64(segments[1])?;
-
-    Ok(Data {co2, temperature})
-}
-
-fn parse_as_f64(s: &str) -> Result<f64, DataError> {
-    match s.parse::<f64>() {
-        Ok(x) => return Ok(x),
-        Err(x) => {
-            tracing::warn!("Couldn't parse as f64. {x}");
-            match s.parse::<i32>() {
-                Ok(x) => {
-                    return Ok(x.into())
-                },
-                Err(x) => {
-                    tracing::error!("Couldn't parse as f64 OR i32. {x} from {s}");
-                    return Err(DataError::ScriptInvalidOutput);
-                }
-            }
+fn parse_string<A>(mut output: String) -> Result<A, DataError>
+    where 
+        A: FromStr,
+        <A as FromStr>::Err: Display,
+{
+    // Trim trailing newline from input
+    output.truncate(output.trim_end_matches(&['\r', '\n'][..]).len());
+    match output.parse() {
+        Ok(x) => Ok(x),
+        Err(e) => {
+            tracing::error!(%e, output, "Couldn't parse command output!");
+            Err(DataError::ScriptInvalidOutput)
         }
     }
 }

@@ -13,7 +13,7 @@ pub async fn ping() {
             crate::retry::ExponentialBackoff::new((1.0 / 1000.0) * 25.0, 2.0, 3),
             || async {
                 return c
-                    .post(crate::CONFIG.configuration().node_endpoint.clone() + "/ip_update")
+                    .post(crate::CONFIG.configuration().node_endpoint.to_string() + "/ip_update")
                     .send()
                     .await;
             },

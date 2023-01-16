@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fs::read;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -9,22 +10,23 @@ pub mod error;
 use error::ConfigManagerError;
 
 #[derive(Deserialize)]
-pub struct Configuration {
-    pub endpoint: String,
-    pub data_script: String,
-    pub node_endpoint: String,
-    pub graphana_endpoint: String,
+pub struct Configuration<'a> {
+    pub endpoint: Cow<'a, str>,
+    pub temp_command: Cow<'a, str>,
+    pub ppa_command: Cow<'a, str>,
+    pub node_endpoint: Cow<'a, str>,
+    pub graphana_endpoint: Cow<'a, str>,
     pub reporting_interval: Mutex<f64>,
     pub raum_id: i32,
 }
 
-pub struct ConfigManager {
+pub struct ConfigManager<'a> {
     path: String,
     doc: Mutex<Document>,
-    conf: Arc<Configuration>,
+    conf: Arc<Configuration<'a>>,
 }
 
-impl ConfigManager {
+impl ConfigManager<'_> {
     #[tracing::instrument]
     pub fn new(path: String) -> Result<Self, ConfigManagerError> {
         // Parse document from `path`

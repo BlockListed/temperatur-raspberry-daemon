@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use axum::{
     extract::Query,
     routing::{get, post},
@@ -21,16 +23,16 @@ pub enum Status {
 }
 
 #[derive(Serialize)]
-pub struct StatusResponse {
+pub struct StatusResponse<'a> {
     pub status: Status,
     pub time: chrono::DateTime<Utc>,
     pub last_send: chrono::DateTime<Utc>,
     pub last_sent_data: Data,
     pub reporting_interval: f64,
-    pub graphana_endpoint: String,
+    pub graphana_endpoint: Cow<'a, str>,
 }
 
-async fn status() -> Json<StatusResponse> {
+async fn status<'a>() -> Json<StatusResponse<'a>> {
     let (last_error, last_send, last_sent_data) = (crate::data::LAST_STATUS.lock().await).clone();
     let reporting_interval = *crate::CONFIG.configuration().reporting_interval.lock().unwrap();
     let graphana_endpoint = crate::CONFIG.configuration().graphana_endpoint.clone();
