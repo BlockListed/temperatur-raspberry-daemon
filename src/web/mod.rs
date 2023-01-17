@@ -11,7 +11,7 @@ use axum::{
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::data::Data;
+use crate::{data::Data, config::error::ConfigManagerError};
 
 async fn root() -> Html<&'static str> {
     Html(include_str!("../../webinterface.html"))
@@ -98,7 +98,11 @@ async fn update_reporting_interval(
         }
         Err(error) => {
             tracing::error!(%error, "Couldn't update reporting inteval!");
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(UpdateReportingIntervalResponse {
+            let s = match error {
+                ConfigManagerError::ReportingIntervalNegative => StatusCode::BAD_REQUEST,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return (s, Json(UpdateReportingIntervalResponse {
                 error: Some(error.to_string()),
                 interval,
             }))
