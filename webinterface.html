@@ -87,6 +87,7 @@
           }).then((x) => {
             x.json().then((y) => {
               that.intervalReturn = null;
+              that.interval = y.interval;
               if (y.error) {
                 that.intervalReturn = y.error;
               } else {
