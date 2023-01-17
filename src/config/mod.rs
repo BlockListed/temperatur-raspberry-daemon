@@ -72,22 +72,15 @@ impl ConfigManager<'_> {
         if seconds < 0.0 {
             return Err(ConfigManagerError::ReportingIntervalNegative);
         }
-        let mut doc = match self.doc.lock() {
-            Ok(x) => x,
-            Err(_) => return Err(ConfigManagerError::MutexPoisoned),
-        };
+        let mut doc = self.doc.lock()?;
         doc["reporting_interval"] = value(seconds);
         // Dropping since it triggers a deadlock otherwise
         drop(doc);
 
-        let mut interval = match self.conf.reporting_interval.lock() {
-            Ok(x) => x,
-            Err(_) => return Err(ConfigManagerError::MutexPoisoned),
-        };
-        *interval = seconds;
-        drop(interval);
-
         self.save()?;
+        
+        let mut interval = self.conf.reporting_interval.lock()?;
+        *interval = seconds;
         Ok(())
     }
 

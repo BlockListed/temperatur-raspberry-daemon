@@ -5,6 +5,7 @@ use axum::{
     routing::{get, post},
     Json, Router, Server,
     response::Html,
+    http::StatusCode,
 };
 
 use chrono::prelude::*;
@@ -59,22 +60,48 @@ struct UpdateReportingIntervalQueryParam {
 #[derive(Serialize)]
 struct UpdateReportingIntervalResponse {
     error: Option<String>,
+    interval: f64,
 }
 
 async fn update_reporting_interval(
     Query(i): Query<UpdateReportingIntervalQueryParam>,
-) -> Json<UpdateReportingIntervalResponse> {
+) -> (StatusCode, Json<UpdateReportingIntervalResponse>) {
     tracing::warn!(i.interval, "Updating reporting interval!");
-    match crate::CONFIG.update_reporting_interval(i.interval) {
+    // Attempt to update reporting interval. (Blocking)
+    let r = match tokio::task::spawn_blocking(move || {
+        crate::CONFIG.update_reporting_interval(i.interval)
+    }).await {
+        Ok(x) => x,
+        Err(x) => {
+            tracing::error!(%x, "update_reporting_interval panicked!");
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(UpdateReportingIntervalResponse { error: Some("Internal Server Error".to_string()), interval: 0.0 }))
+        }
+    };
+
+    // Attempt to receive new reporting interval.
+    let interval = match crate::CONFIG.configuration().reporting_interval.lock() {
+        Ok(x) => *x,
+        Err(e) => {
+            tracing::error!(%e, "Poisened Mutex made handler fail!");
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(UpdateReportingIntervalResponse { error: Some(e.to_string()), interval: 0.0,  }))
+        }
+    };
+
+    // Check return and send back relevant information.
+    match r {
         Ok(_) => {
             tracing::info!(i.interval, "Succesfully updated reporting interval!");
-            return Json(UpdateReportingIntervalResponse { error: None })
+            return (StatusCode::OK, Json(UpdateReportingIntervalResponse { 
+                interval,
+                error: None,
+            }))
         }
         Err(error) => {
             tracing::error!(%error, "Couldn't update reporting inteval!");
-            return Json(UpdateReportingIntervalResponse {
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(UpdateReportingIntervalResponse {
                 error: Some(error.to_string()),
-            })
+                interval,
+            }))
         }
     }
 }

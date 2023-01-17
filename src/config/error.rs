@@ -15,3 +15,9 @@ pub enum ConfigManagerError {
     #[error("Reporting interval cannot be negative")]
     ReportingIntervalNegative,
 }
+
+impl<T> From<std::sync::PoisonError<T>> for ConfigManagerError {
+    fn from(_value: std::sync::PoisonError<T>) -> Self {
+        Self::MutexPoisoned
+    }
+}
