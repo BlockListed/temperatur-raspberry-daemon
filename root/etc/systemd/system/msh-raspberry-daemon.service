@@ -5,3 +5,6 @@ Description=Daemon für Messgerät Projekt (Aaron <llpvbel7h@mozmail.com>)
 Type=simple
 ExecStart=/usr/local/msh/bin/raspberry-daemon
 Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
