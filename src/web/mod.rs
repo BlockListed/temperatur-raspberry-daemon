@@ -57,6 +57,7 @@ struct UpdateReportingIntervalQueryParam {
     interval: f64,
 }
 
+#[serde_with::skip_serializing_none]
 #[derive(Serialize)]
 struct UpdateReportingIntervalResponse {
     error: Option<String>,
