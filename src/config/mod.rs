@@ -72,10 +72,7 @@ impl ConfigManager<'_> {
         if seconds < 0.0 {
             return Err(ConfigManagerError::ReportingIntervalNegative);
         }
-        let mut doc = self.doc.lock()?;
-        doc["reporting_interval"] = value(seconds);
-        // Dropping since it triggers a deadlock otherwise
-        drop(doc);
+        self.doc.lock()?["reporting_interval"] = value(seconds);
 
         self.save()?;
         
