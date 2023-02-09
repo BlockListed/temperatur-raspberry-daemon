@@ -49,7 +49,6 @@ where
     Fut: Future<Output = Result<R, E>>,
 {
     let retries = strategy.len();
-    // Ok since we can only reach the bottom block, if this gets initialized.
     for (i, w) in strategy.enumerate() {
         let r = function().await;
         match r {
