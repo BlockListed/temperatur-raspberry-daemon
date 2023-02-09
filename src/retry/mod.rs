@@ -55,10 +55,10 @@ where
         match r {
             Ok(x) => return Ok(x),
             Err(error) => {
-                tracing::warn!(retry_name, %error, "Retrying!");
                 if i == retries {
                     return Err(error);
                 }
+                tracing::warn!(retry_name, %error, "Retrying!");
             }
         }
         sleep(w).await;
